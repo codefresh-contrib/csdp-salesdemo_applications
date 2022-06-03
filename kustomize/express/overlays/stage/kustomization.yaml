@@ -2,8 +2,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../../base
+  - ../../base
 namespace: csdp-salesdemo-stage
 images:
-- name: quay.io/codefresh_sa/express-microservice
-  newTag: 941b41c
+  - name: quay.io/codefresh_sa/express-microservice
+    newTag: aaaa1111
