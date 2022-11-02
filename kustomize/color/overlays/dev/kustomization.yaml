@@ -10,5 +10,5 @@ configMapGenerator:
   namespace: color
 images:
 - name: color-service
-  newName: salesdemosa/example-multiservice2
-  newTag: 0edfe88
+  newName: docker.io/salesdemosa/example-multiservice2
+  newTag: 5ee1abc
