@@ -4,7 +4,11 @@ resources:
 - ../../base
 namespace: color
 configMapGenerator:
-- name: color-config
-  namespace: color
-  literals:
+- literals:
   - COLOR1=orange
+  name: color-config
+  namespace: color
+images:
+- name: color-service
+  newName: codefresh_sa/example-multiservice2
+  newTag: 0edfe88
