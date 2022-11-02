@@ -11,4 +11,4 @@ configMapGenerator:
 images:
 - name: color-service
   newName: docker.io/salesdemosa/color
-  newTag: 5ee1abc
+  newTag: b6b9200
