@@ -4,7 +4,11 @@ resources:
 - ../../base
 namespace: color
 configMapGenerator:
-- name: color-config
-  namespace: color
-  literals:
+- literals:
   - COLOR1=yellow
+  name: color-config
+  namespace: color
+images:
+- name: color-service
+  newName: docker.io/salesdemosa/example-multiservice2
+  newTag: 5ee1abc
