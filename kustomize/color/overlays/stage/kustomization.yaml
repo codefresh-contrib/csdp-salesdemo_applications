@@ -14,4 +14,4 @@ images:
   newTag: 1b6145d
 - name: quay.io/codefresh_sa/color-service
   newName: docker.io/salesdemosa/color
-  newTag: 4af2ebc
+  newTag: cb65204
