@@ -1,0 +1,129 @@
+# More examples of Codefresh YAML can be found at
+# https://codefresh.io/docs/docs/yaml-examples/examples/
+
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "clone"
+  - "unit-test" 
+  - "build"
+  - "test"
+  - "report-info"
+  - "cd"
+#Please set the following variables on any new triggers 
+#GIT_CONTEXT = name of the Git integration
+#DOCKER_CONTEXT = name of the docker integration to use 
+#MIRCROSERVICE_DIR = path to the dockerfile for the microservice we want to build
+
+steps:
+  clone_ci:
+    title: "Cloning repository"
+    type: "git-clone"
+    repo: "${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}"
+    # CF_BRANCH value is auto set when pipeline is triggered
+    # Learn more at codefresh.io/docs/docs/codefresh-yaml/variables/
+    revision: "${{CF_BRANCH}}"
+    git: "${{GIT_CONTEXT}}"
+    stage: "clone"
+
+  build:
+    title: "Building Docker image"
+    type: "build"
+    image_name: "${{DOCKER_CONTEXT}}/${{MICROSERVICE_DIR}}"
+    working_directory: "${{clone_ci}}/${{MICROSERVICE_DIR}}"
+    tag: "${{CF_SHORT_REVISION}}"
+    registry: "${{DOCKER_CONTEXT}}"
+    dockerfile: "${{DOCKERFILE}}"
+    stage: "build"
+
+
+    
+  parallel_tests:
+      type: parallel
+      stage: test
+      steps:
+        test1:
+          title: "Running test"
+          type: "freestyle" # Run any command
+          image: "ubuntu:latest" # The image in which command will be executed
+          working_directory: "${{clone_ci}}" # Running command where code cloned
+          commands:
+            - "ls"
+          stage: test
+        test2:
+          title: "Running test"
+          type: "freestyle" # Run any command
+          image: "ubuntu:latest" # The image in which command will be executed
+          working_directory: "${{clone_ci}}" # Running command where code cloned
+          commands:
+            - "ls -la"
+          stage: test
+
+  ReportImageMetadata:
+    title: Report image to Codefresh CD
+    type: codefresh-report-image
+    working_directory: /code
+    stage: report-info
+    arguments:
+      CF_API_KEY: "${{CF_API_KEY}}"
+      CF_IMAGE: 'docker.io/${{DOCKER_CONTEXT}}/${{MICROSERVICE_DIR}}:${{CF_SHORT_REVISION}}'
+      CF_ENRICHERS: 'jira,git'
+      CF_RUNTIME_NAME: csdp-salesdemo-stage
+      CF_CONTAINER_REGISTRY_INTEGRATION: "${{DOCKER_CONTEXT}}"
+      CF_GIT_BRANCH: "${{CF_BRANCH}}" 
+      CF_GIT_REPO: "${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}"
+      CF_GITHUB_TOKEN: "${{GIT_TOKEN}}"
+      CF_GIT_PROVIDER: "github"
+      CF_JIRA_INTEGRATION: cfdemojira
+      CF_JIRA_MESSAGE: "KPT-22: Modals with DarkGoldenRod accent color"
+      CF_JIRA_PROJECT_PREFIX: "KPT"
+
+
+
+
+  clone_cd:
+    title: "Cloning repository"
+    type: "git-clone"
+    repo: "${{CF_REPO_OWNER}}/${{CD_REPOSITORY}}"
+    # CF_BRANCH value is auto set when pipeline is triggered
+    # Learn more at codefresh.io/docs/docs/codefresh-yaml/variables/
+    revision: "main"
+    #assume we always commit to main for the CD repo
+    git: "${{GIT_CONTEXT}}"
+    stage: "clone"
+    
+#   update_deploy_tag:
+#     title: "Updating deploy Tag"
+#     image: "nightmar39/git-yq:latest"
+#     working_directory: "${{clone_cd}}"
+#     commands: 
+#       - "ls" 
+#       - yq -iv '(.spec.template.spec.containers[] | select (.name == "color-service") | .image) = '${{DOCKER_CONTEXT}}/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED}}' kustomize/color/base/deployment.yaml 
+  update_image_kustomize: 
+    title: "Updating image tag, using kustomize" 
+    image: "traherom/kustomize-docker"
+    working_directory: "${{clone_cd}}"
+    commands:
+      - "cd ${{KUSTOMIZE_PATH}}"
+      - "kustomize edit set image ${{OLD_IMAGE}}=docker.io/${{DOCKER_CONTEXT}}/${{MICROSERVICE_DIR}}:${{CF_SHORT_REVISION}}"
+      - "cat kustomization.yaml" 
+    stage: "cd"
+      
+  cd:
+    type: git-commit
+    description: Commit changed kustomize file to CD repo
+    fail_fast: false #remove this line after testing
+    arguments:
+      repo: codefresh-contrib/csdp-salesdemo_applications
+      add: 'kustomization.yaml' 
+      commit_message: "Updating tag to revision ${{CF_SHORT_REVISION}} for microservice ${{MICROSERVICE_DIR}}"
+      git: '${{GIT_CONTEXT}}'
+      working_directory: '/codefresh/volume/${{CD_REPOSITORY}}/${{KUSTOMIZE_PATH}}'
+      git_user_name: cf-charizard
+      allow_empty: false
+      force_push: false
+      rebase: false
+    stage: "cd"
+
+
+    
