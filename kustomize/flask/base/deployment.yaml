@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: flask-simple
-          image: nightmar39/flask-bg-app:e03addb
+          image: docker.io/nightmar39/flask-bg-app:e03addb
           ports:
             - name: http
               containerPort: 8000
