@@ -10,5 +10,5 @@ configMapGenerator:
   namespace: color
 images:
 - name: quay.io/codefresh_sa/color-service
-  newName: docker.io/salesdemosa/color
-  newTag: f99708f
+  newName: salesdemosa/color
+  newTag: 971b6d3
